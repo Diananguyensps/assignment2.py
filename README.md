@@ -1,36 +1,48 @@
-import csv
+import argparse
+import urllib.request
+import logging
 import datetime
+import csv
 
-def downloadData(file_path):
-    with open(file_path, 'r', newline='') as f:
-        reader = csv.reader(f)
-        data = list(reader)
+def downloadData(url):
+    """Downloads the data and returns it as a list of lines"""
+    response = urllib.request.urlopen(url)
+    data = response.read().decode('utf-8').splitlines()
     return data
 
 def processData(file_content):
+    """Processes the CSV data into a dictionary"""
+    reader = csv.reader(file_content)
     data_dict = {}
-    for row in file_content:
+    for line in reader:
         try:
-            id = int(row[0])
-            name = row[1]
-            birthday = datetime.datetime.strptime(row[2], "%d/%m/%Y")
+            id = int(line[0])
+            name = line[1]
+            birthday = datetime.datetime.strptime(line[2], "%m/%d/%Y")
             data_dict[id] = (name, birthday)
-        except Exception:
-            continue
+        except Exception as e:
+            logging.error(f"Error processing line {line}: {e}")
     return data_dict
 
 def displayPerson(id, personData):
+    """Prints a person's name and birthday by ID"""
     if id in personData:
         name, birthday = personData[id]
         print(f"Person #{id} is {name} with a birthday of {birthday.strftime('%Y-%m-%d')}")
     else:
-        print(f"No person found with ID {id}")
+        print(f"No user found with ID {id}")
 
-def main():
-    csv_file = "birthdays100.csv"
-    data = downloadData(csv_file)
+def main(url):
+    print(f"Running main with URL = {url}...")
+    data = downloadData(url)
     personData = processData(data)
+
+    # Just as an example, display person with ID 1
     displayPerson(1, personData)
 
 if __name__ == "__main__":
-    main()
+    """Main entry point"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
+    args = parser.parse_args()
+    main(args.url)
