@@ -1,37 +1,45 @@
+import argparse
+import urllib.request
+import logging
+import datetime
 import csv
 
-def downloadData(file_path):
-    with open(file_path, 'r') as f:
-        reader = csv.reader(f)
-        data = list(reader)
+def downloadData(url):
+    """Downloads the data and returns it as a list of lines"""
+    response = urllib.request.urlopen(url)
+    data = response.read().decode('utf-8').splitlines()
     return data
 
 def processData(file_content):
-    processed = []
-    for row in file_content:
-        if len(row) == 3:
-            person = {
-                "id": int(row[0]),
-                "name": row[1],
-                "birthday": row[2]
-            }
-            processed.append(person)
-    return processed
+    """Processes the CSV data into a dictionary"""
+    reader = csv.reader(file_content)
+    data_dict = {}
+    for line in reader:
+        try:
+            id = int(line[0])
+            name = line[1]
+            birthday = datetime.datetime.strptime(line[2], "%d/%m/%Y")  # Correct format
+            data_dict[id] = (name, birthday)
+        except Exception as e:
+            logging.error(f"Error processing line {line}: {e}")
+    return data_dict
 
-def displayPerson(person_id, personData):
-    for person in personData:
-        if person["id"] == person_id:
-            print(f'ID: {person["id"]}, Name: {person["name"]}, Birthday: {person["birthday"]}')
-            return
-    print(f"No person found with ID {person_id}")
+def displayPerson(id, personData):
+    """Prints a person's name and birthday by ID"""
+    if id in personData:
+        name, birthday = personData[id]
+        print(f"Person #{id} is {name} with a birthday of {birthday.strftime('%Y-%m-%d')}")
+    else:
+        print(f"No user found with ID {id}")
 
-def main(file_path):
-    file_content = downloadData(file_path)
-    personData = processData(file_content)
-    
-    for person in personData:
-        displayPerson(person["id"], personData)
+def main(url):
+    print(f"Running main with URL = {url}...")
+    data = downloadData(url)
+    personData = processData(data)
+    displayPerson(1, personData)  # Example: show Person #1
 
 if __name__ == "__main__":
-    csv_file = "birthdays100.csv"  # CSV file in the same repo
-    main(csv_file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
+    args = parser.parse_args()
+    main(args.url)
