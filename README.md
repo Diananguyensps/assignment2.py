@@ -36,12 +36,9 @@ def main(url):
     print(f"Running main with URL = {url}...")
     data = downloadData(url)
     personData = processData(data)
-
-    # Just as an example, display person with ID 1
-    displayPerson(1, personData)
+    displayPerson(1, personData)  # Example: show Person #1
 
 if __name__ == "__main__":
-    """Main entry point"""
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
     args = parser.parse_args()
