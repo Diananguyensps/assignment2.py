@@ -1,48 +1,28 @@
-import argparse
-import urllib.request
-import logging
-import datetime
 import csv
+import logging
+from datetime import datetime
 
-def downloadData(url):
-    """Downloads the data and returns it as a list of lines"""
-    response = urllib.request.urlopen(url)
-    data = response.read().decode('utf-8').splitlines()
-    return data
+logging.basicConfig(level=logging.ERROR)
+
+def clean_date(date_str):
+    date_str = date_str.replace('*', '/').replace('-', '/').replace('//', '/')
+    parts = date_str.split('/')
+    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+        return None
+    return date_str
 
 def processData(file_content):
-    """Processes the CSV data into a dictionary"""
+    personData = []
     reader = csv.reader(file_content)
-    data_dict = {}
-    for line in reader:
+    next(reader)  # skip header
+    for row in reader:
         try:
-            id = int(line[0])
-            name = line[1]
-            birthday = datetime.datetime.strptime(line[2], "%m/%d/%Y")
-            data_dict[id] = (name, birthday)
+            id_num = int(row[0])
+            date_str = clean_date(row[2])
+            if not date_str:
+                raise ValueError(f"Invalid date: {row[2]}")
+            birthday = datetime.strptime(date_str, "%d/%m/%Y")
+            personData.append({"id": id_num, "name": row[1], "birthday": birthday})
         except Exception as e:
-            logging.error(f"Error processing line {line}: {e}")
-    return data_dict
-
-def displayPerson(id, personData):
-    """Prints a person's name and birthday by ID"""
-    if id in personData:
-        name, birthday = personData[id]
-        print(f"Person #{id} is {name} with a birthday of {birthday.strftime('%Y-%m-%d')}")
-    else:
-        print(f"No user found with ID {id}")
-
-def main(url):
-    print(f"Running main with URL = {url}...")
-    data = downloadData(url)
-    personData = processData(data)
-
-    # Just as an example, display person with ID 1
-    displayPerson(1, personData)
-
-if __name__ == "__main__":
-    """Main entry point"""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
-    args = parser.parse_args()
-    main(args.url)
+            logging.error(f"Error processing line {row}: {e}")
+    return personData
