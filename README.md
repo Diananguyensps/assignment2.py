@@ -18,7 +18,7 @@ def processData(file_content):
         try:
             id = int(line[0])
             name = line[1]
-            birthday = datetime.datetime.strptime(line[2], "%d/%m/%Y")  # Correct format
+            birthday = datetime.datetime.strptime(line[2], "%m/%d/%Y")
             data_dict[id] = (name, birthday)
         except Exception as e:
             logging.error(f"Error processing line {line}: {e}")
@@ -36,9 +36,12 @@ def main(url):
     print(f"Running main with URL = {url}...")
     data = downloadData(url)
     personData = processData(data)
-    displayPerson(1, personData)  # Example: show Person #1
+
+    # Just as an example, display person with ID 1
+    displayPerson(1, personData)
 
 if __name__ == "__main__":
+    """Main entry point"""
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
     args = parser.parse_args()
