@@ -1,27 +1,24 @@
-import argparse
-import urllib.request
-import logging
-import datetime
 import csv
+import datetime
 
-def downloadData(url):
-    """Downloads the data and returns it as a list of lines"""
-    response = urllib.request.urlopen(url)
-    data = response.read().decode('utf-8').splitlines()
+def downloadData(file_path):
+    """Reads the CSV file from the local path and returns it as a list of rows"""
+    with open(file_path, 'r', newline='') as f:
+        reader = csv.reader(f)
+        data = list(reader)
     return data
 
 def processData(file_content):
-    """Processes the CSV data into a dictionary"""
-    reader = csv.reader(file_content)
+    """Processes CSV rows into a dictionary keyed by ID"""
     data_dict = {}
-    for line in reader:
+    for row in file_content:
         try:
-            id = int(line[0])
-            name = line[1]
-            birthday = datetime.datetime.strptime(line[2], "%m/%d/%Y")
+            id = int(row[0])
+            name = row[1]
+            birthday = datetime.datetime.strptime(row[2], "%d/%m/%Y")  # Adjust to CSV format
             data_dict[id] = (name, birthday)
-        except Exception as e:
-            logging.error(f"Error processing line {line}: {e}")
+        except Exception:
+            continue  # skip bad rows
     return data_dict
 
 def displayPerson(id, personData):
@@ -30,16 +27,13 @@ def displayPerson(id, personData):
         name, birthday = personData[id]
         print(f"Person #{id} is {name} with a birthday of {birthday.strftime('%Y-%m-%d')}")
     else:
-        print(f"No user found with ID {id}")
+        print(f"No person found with ID {id}")
 
-def main(url):
-    print(f"Running main with URL = {url}...")
-    data = downloadData(url)
+def main():
+    csv_file = "birthdays100.csv"  # Make sure this file is in your repo
+    data = downloadData(csv_file)
     personData = processData(data)
-    displayPerson(1, personData)  # Example: show Person #1
+    displayPerson(1, personData)  # Example: show person #1
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
-    args = parser.parse_args()
-    main(args.url)
+    main()
